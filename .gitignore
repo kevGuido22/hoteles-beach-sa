@@ -1,0 +1,72 @@
+## Ignora archivos de sistema
+*.DS_Store
+Thumbs.db
+
+## Archivos de configuración de Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.sln.bin
+
+## Archivos de compilación y paquetes de NuGet
+bin/
+obj/
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+
+## Archivos de dependencias de .NET
+*.dll
+*.exe
+*.app
+*.db
+*.dylib
+*.so
+*.pkg
+*.log
+*.pid
+*.gz
+*.class
+*.sqlite
+*.pdb
+*.cache
+*.idx
+*.pack
+
+## Archivos de configuración de usuario y temporales
+*.log
+.idea/
+.vscode/
+*.tmproj
+*.launch
+*.appx
+*.pdb
+*.lock.json
+Thumbs.db
+
+## Configuración de IIS
+.vs/
+.vscode/
+
+## Configuración de Rider y ReSharper
+.idea/
+.vsconfig
+
+## Archivos de configuración de Azure
+.azcli/
+.azure/
+
+## Configuración del entorno de desarrollo
+appsettings.*.json
+appsettings.json
+secrets.json
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
