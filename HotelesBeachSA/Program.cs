@@ -3,6 +3,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add http client to the container to be used in the controllers to make requests to the Reservaciones API
+builder.Services.AddHttpClient("ReservacionesHttpClient", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7016/api/");
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
