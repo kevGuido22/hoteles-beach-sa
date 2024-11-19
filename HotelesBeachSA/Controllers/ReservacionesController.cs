@@ -15,7 +15,7 @@ namespace HotelesBeachSA.Controllers
         public async Task<IActionResult> Index()
         {
             // Llama a un endpoint para obtener todas las reservaciones
-            HttpResponseMessage response = await _client.GetAsync("Reservaciones/GetAll");
+            HttpResponseMessage response = await _client.GetAsync("Reservacion/GetAll");
 
             if (response.IsSuccessStatusCode)
             {
