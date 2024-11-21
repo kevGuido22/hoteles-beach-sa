@@ -14,8 +14,8 @@ namespace HotelesBeachSA.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            // Llama a un endpoint para obtener todas las reservaciones
-            HttpResponseMessage response = await _client.GetAsync("Reservacion/GetAll");
+            // Llama al endpoint para obtener todas las reservaciones
+            HttpResponseMessage response = await _client.GetAsync("Reservacion/Listado");
 
             if (response.IsSuccessStatusCode)
             {
@@ -27,6 +27,10 @@ namespace HotelesBeachSA.Controllers
 
             TempData["Error"] = "No se pudo cargar el listado de reservaciones.";
             return View(new List<Reservacion>());
+        }
+        public IActionResult Create()
+        {
+            return View();
         }
     }
 }
