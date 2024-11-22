@@ -22,6 +22,8 @@ namespace HotelesBeachSA.Controllers
             return View();
         }
 
+        //probando github desktop...
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind] Usuario pUsuario)
