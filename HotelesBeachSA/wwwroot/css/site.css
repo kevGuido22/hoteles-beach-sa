@@ -20,3 +20,27 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.boton {
+    background-color: #72b0ca;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+    .boton:hover {
+        background-color: #05729f;
+        color: white;
+    }
+
+    .boton i {
+        margin-left: 8px;
+    }
+
+.mt-10rem {
+    margin-top: 10rem;
+}
+
