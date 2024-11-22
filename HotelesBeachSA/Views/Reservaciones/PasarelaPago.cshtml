@@ -1,0 +1,60 @@
+﻿@model HotelesBeachSA.Models.Reservacion
+
+<h1>Reservación - Paso 2: Método de Pago</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="PasarelaPago" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Mostrar los detalles de la reservación actual -->
+            <h4>Detalles de tu reservación:</h4>
+            <ul>
+                <li><strong>Paquete:</strong> @Model.PaqueteId</li>
+                <li><strong>Cantidad de Personas:</strong> @Model.CantidadPersonas</li>
+                <li><strong>Fecha Inicio:</strong> @Model.FechaInicio.ToShortDateString()</li>
+                <li><strong>Fecha Fin:</strong> @Model.FechaFin.ToShortDateString()</li>
+            </ul>
+
+            @* totales, descuentos *@
+
+            <!-- Seleccionar el método de pago -->
+            <div class="form-group">
+                <label for="formaPagoId">Selecciona un método de pago</label>
+                <select id="formaPagoId" name="formaPagoId" class="form-control" asp-items="@(ViewData["FormasPago"] as SelectList)">
+                    <option value="">Seleccionar</option>
+                </select>
+            </div>
+
+            <!-- Inputs adicionales para tarjeta o cheque -->
+            <div id="detallePago" style="display:none;">
+                <div class="form-group" id="numeroPagoDiv">
+                    <label for="numeroPago">Número de Cheque/Tarjeta</label>
+                    <input type="text" id="numeroPago" name="numeroPago" class="form-control" />
+                </div>
+
+                <div class="form-group" id="bancoDiv">
+                    <label for="banco">Nombre del Banco</label>
+                    <input type="text" id="banco" name="banco" class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary mt-3">Continuar al Paso 3</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById("formaPagoId").addEventListener("change", function () {
+        var selectedValue = this.value;
+
+        document.getElementById("detallePago").style.display = "none";
+
+        if (selectedValue == "2" || selectedValue == "3") {
+            document.getElementById("detallePago").style.display = "block";
+        }
+    });
+</script>

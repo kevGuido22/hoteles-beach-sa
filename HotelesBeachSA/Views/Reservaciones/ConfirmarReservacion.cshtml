@@ -1,0 +1,21 @@
+﻿@model ConfirmacionViewModel
+
+<h2>Confirmar Reservación</h2>
+
+<div>
+    <h3>Detalles de la Reservación</h3>
+    <p><strong>Fecha de entrada:</strong> @Model.Reservacion.FechaInicio</p>
+    <p><strong>Fecha de salida:</strong> @Model.Reservacion.FechaFin</p>
+
+    @* totales, descuentos *@
+
+    <h3>Detalles del Pago</h3>
+    <p><strong>Método de Pago:</strong> @Model.FormaPagoId == 1 ? "Efectivo" : Model.FormaPagoId == 2 ? "Cheque" : "Tarjeta"</p>
+    <p><strong>Número de Pago:</strong> @Model.NumeroPago</p>
+    <p><strong>Banco:</strong> @Model.Banco</p>
+</div>
+
+<form method="post" action="@Url.Action("ConfirmarReservacion")">
+    <button type="submit">Confirmar Reservación</button>
+</form>
+

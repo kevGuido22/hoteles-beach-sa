@@ -14,11 +14,6 @@
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" />
-                <span asp-validation-for="Id" class="text-danger"></span>
-            </div>
-            <div class="form-group">
                 <label asp-for="UsuarioId" class="control-label"></label>
                 <input asp-for="UsuarioId" class="form-control" />
                 <span asp-validation-for="UsuarioId" class="text-danger"></span>
@@ -43,13 +38,13 @@
                 <input asp-for="FechaFin" class="form-control" />
                 <span asp-validation-for="FechaFin" class="text-danger"></span>
             </div>
-            <div class="form-group">
+           @*  <div class="form-group">
                 <label asp-for="FechaCreacion" class="control-label"></label>
                 <input asp-for="FechaCreacion" class="form-control" />
                 <span asp-validation-for="FechaCreacion" class="text-danger"></span>
-            </div>
+            </div> *@
             <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <button type="submit" class="btn btn-primary">Continuar al pago</button>
             </div>
         </form>
     </div>
