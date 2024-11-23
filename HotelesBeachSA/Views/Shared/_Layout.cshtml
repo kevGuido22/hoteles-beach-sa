@@ -41,14 +41,14 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="" asp-action="">Hi @User.Identity.Name !</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="LogOut">Log Out</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="Logout">Log Out</a>
                             </li>
 
                         }
                         else
                         {
                             <li class="nav-item justify-content-end">
-                                <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="" asp-controller="Clients" asp-action="Login">
+                                <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="" asp-controller="Usuarios" asp-action="Login">
                                     Login
                                     <i class="fa-solid fa-user"></i>
                                 </a>
