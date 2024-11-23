@@ -15,14 +15,28 @@
             <div class="col-sm-4 bg-color">
                 <div class="d-flex justify-content-center">
                     <div>
-                        <h1 class="text-center text-uppercase">Buscar</h1>
+                        <h1 class="text-center text-uppercase">Crear Cuenta</h1>
 
-                        <h4 class="text-center">información de persona</h4>
+                        <h4 class="text-center">Por numero de cedula</h4>
                     </div>
                 </div>
 
                 <hr />
+                @{
+                    if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["Error"]
+                        </div>
+                    }
 
+                    if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["Mensaje"]
+                        </div>
+                    }
+                }
                 <div class="d-flex justify-content-center">
                     <div>
                         <div class="d-flex justify-content-center mb-2">

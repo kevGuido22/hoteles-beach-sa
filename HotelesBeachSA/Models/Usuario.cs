@@ -31,5 +31,18 @@ namespace HotelesBeachSA.Models
         [Required(ErrorMessage = "Debe de ingresar la contraseña")]
         //[Column(TypeName = "VARCHAR(255)")]
         public string Password { get; set; }
+
+        public bool Confirm(string pw)
+        {
+            bool authenticated = false;
+            if (Password != null)
+            {
+                if (Password.Equals(pw))
+                {
+                    authenticated = true;
+                }
+            }
+            return authenticated;
+        }
     }
 }
