@@ -112,7 +112,13 @@ namespace HotelesBeachSA.Controllers
                 return View("Create", reservacion);
             }
 
-            TempData["Reservacion"] = JsonConvert.SerializeObject(reservacion);
+            if(reservacion != null)
+            {
+                
+                TempData["Reservacion"] = JsonConvert.SerializeObject(reservacion);
+                TempData.Keep("Reservacion"); 
+            }
+
 
             return RedirectToAction("PasarelaPago");
         }
@@ -125,6 +131,7 @@ namespace HotelesBeachSA.Controllers
         {
             // Recuperar datos de la reservación desde TempData
             var reservacionJson = TempData["Reservacion"] as string;
+            TempData.Keep("Reservacion");
 
             if (string.IsNullOrEmpty(reservacionJson))
             {
@@ -180,6 +187,8 @@ namespace HotelesBeachSA.Controllers
 
             // Recuperar la reservación original desde TempData
             var reservacionJson = TempData["Reservacion"] as string;
+            TempData.Keep("Reservacion");
+
             if (string.IsNullOrEmpty(reservacionJson))
             {
                 TempData["Error"] = "Hubo un problema al recuperar los datos de la reservación. Por favor, inicia el proceso nuevamente.";
@@ -201,6 +210,7 @@ namespace HotelesBeachSA.Controllers
             {
                 // Guardar los datos de la reservación y el pago en TempData
                 TempData["Reservacion"] = JsonConvert.SerializeObject(reservacionOriginal);
+                TempData.Keep("Reservacion");
                 TempData["Pago"] = JsonConvert.SerializeObject(model); 
 
                 TempData["Exito"] = "La factura se creó correctamente.";
@@ -219,6 +229,7 @@ namespace HotelesBeachSA.Controllers
         {
             // Recuperar la reservación desde TempData
             var reservacionJson = TempData["Reservacion"] as string;
+            TempData.Keep("Reservacion");
 
             // Recuperar la info del pago
             var pagoJson = TempData["Pago"] as string;

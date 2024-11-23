@@ -17,5 +17,10 @@ namespace HotelesBeachSA.Models
         public string? NumeroTarjeta { get; set; }
 
         public string? Banco {  get; set; }
+
+
+
+
+
     }
 }
