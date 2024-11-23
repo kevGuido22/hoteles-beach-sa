@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using System.Diagnostics.Eventing.Reader;
+using System.Reflection;
 
 namespace HotelesBeachSA.Controllers
 {
@@ -66,6 +67,8 @@ namespace HotelesBeachSA.Controllers
             return View(viewModel);
         }
 
+
+
         public async Task<IActionResult> Create()
         {
             HttpResponseMessage response = await _client.GetAsync("Paquetes/ListadoCompleto");
@@ -98,50 +101,114 @@ namespace HotelesBeachSA.Controllers
             {
                 TempData["Error"] = "Por favor, completa todos los campos requeridos correctamente.";
 
-                var paquetesResponse = await _client.GetAsync("Paquetes/ListadoCompleto");
+                // Recargar los paquetes en caso de error en el modelo
+                var paquetesResponse = await _client.GetAsync("Paquetes/ListadoHabilitados");
                 if (paquetesResponse.IsSuccessStatusCode)
                 {
                     var paquetes = JsonConvert.DeserializeObject<List<Paquete>>(await paquetesResponse.Content.ReadAsStringAsync());
-                    ViewData["Paquetes"] = new SelectList(paquetes, "Id", "Nombre");
+                    ViewData["Paquetes"] = new SelectList(paquetes, "id", "nombre");
                 }
                 else
                 {
-                    ViewData["Paquetes"] = new SelectList(new List<Paquete>(), "Id", "Nombre");
+                    ViewData["Paquetes"] = new SelectList(new List<Paquete>(), "id", "nombre");
                 }
 
                 return View("Create", reservacion);
             }
 
-            if(reservacion != null)
+            // Obtener los detalles del paquete seleccionado
+            HttpResponseMessage paqueteResponse = await _client.GetAsync($"Paquetes/Buscar?id={reservacion.PaqueteId}");
+            if (!paqueteResponse.IsSuccessStatusCode)
             {
-                
-                TempData["Reservacion"] = JsonConvert.SerializeObject(reservacion);
-                TempData.Keep("Reservacion"); 
+                TempData["Error"] = "No se pudo obtener la información del paquete seleccionado.";
+                return RedirectToAction("Create");
             }
 
+            var paquete = JsonConvert.DeserializeObject<Paquete>(await paqueteResponse.Content.ReadAsStringAsync());
+            // Calcular la cantidad de noches
+            var cantidadNoches = (reservacion.FechaFin - reservacion.FechaInicio).Days;
+
+            if (cantidadNoches <= 0)
+            {
+                TempData["Error"] = "La fecha de fin debe ser posterior a la fecha de inicio.";
+                return RedirectToAction("Create");
+            }
+
+            // Calcular costos iniciales
+            var totalNoche = paquete.CostoPersona * reservacion.CantidadPersonas * cantidadNoches;
+            decimal descuento = 0;
+
+            // Aplicar descuentos según la cantidad de noches
+            if (cantidadNoches >= 3 && cantidadNoches <= 6)
+            {
+                descuento = totalNoche * 0.10m; // 10%
+            }
+            else if (cantidadNoches >= 7 && cantidadNoches <= 9)
+            {
+                descuento = totalNoche * 0.15m; // 15%
+            }
+            else if (cantidadNoches >= 10 && cantidadNoches <= 12)
+            {
+                descuento = totalNoche * 0.20m; // 20%
+            }
+            else if (cantidadNoches >= 13)
+            {
+                descuento = totalNoche * 0.25m; // 25%
+            }
+
+            // Aplicar descuento si es en efectivo (por defecto)
+            var montoConDescuento = totalNoche - descuento;
+
+            // Calcular costos adicionales
+            var prima = montoConDescuento * (decimal)paquete.PrimaReserva / 100;
+            var restante = montoConDescuento - prima;
+            var mensualidad = restante / paquete.Mensualidades;
+
+            // Calcular IVA
+            var iva = montoConDescuento * 0.13m;
+            var totalFinal = montoConDescuento + iva;
+
+            // Generar detalles de pago
+            var detallesPago = new ConfirmarReservacionDTO
+            {
+                Reservacion = reservacion,
+                PaqueteId = paquete.Id,
+                PaqueteNombre = paquete.Nombre,
+                CostoPorPersona = paquete.CostoPersona,
+                TotalPorNoche = totalNoche,
+                Descuento = descuento,
+                MontoConDescuento = montoConDescuento,
+                Prima = prima,
+                Mensualidad = mensualidad,
+                Iva = iva,
+                TotalFinal = totalFinal,
+            };
+
+            TempData["Reservacion"] = JsonConvert.SerializeObject(reservacion);
+            TempData["DetallesPago"] = JsonConvert.SerializeObject(detallesPago);
+            TempData.Keep();
 
             return RedirectToAction("PasarelaPago");
         }
 
 
-
-
         [HttpGet]
         public async Task<IActionResult> PasarelaPago()
         {
-            // Recuperar datos de la reservación desde TempData
             var reservacionJson = TempData["Reservacion"] as string;
+            var detallesPagoJson = TempData["DetallesPago"] as string;
             TempData.Keep("Reservacion");
+            TempData.Keep("DetallesPago");
 
-            if (string.IsNullOrEmpty(reservacionJson))
+            if (string.IsNullOrEmpty(reservacionJson) || string.IsNullOrEmpty(detallesPagoJson))
             {
-                TempData["Error"] = "Hubo un problema al recuperar los datos de la reservación. Por favor, inicia el proceso nuevamente.";
+                TempData["Error"] = "Hubo un problema al recuperar los datos de la reservación o los detalles de pago. Por favor, inicia el proceso nuevamente.";
                 return RedirectToAction("Create");
             }
 
             var reservacion = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
+            var detallesPago = JsonConvert.DeserializeObject<ConfirmarReservacionDTO>(detallesPagoJson);
 
-            // Llamar al endpoint para obtener las formas de pago
             HttpResponseMessage responseFormasPago = await _client.GetAsync("FormaPago/Listado");
             if (responseFormasPago.IsSuccessStatusCode)
             {
@@ -162,7 +229,8 @@ namespace HotelesBeachSA.Controllers
                 ViewData["FormasPago"] = new SelectList(new List<FormaPago>(), "Id", "Nombre");
             }
 
-            // Pasar la reservación actual a la vista
+            // Pasar la reservación y detalles de pago a la vista
+            ViewBag.DetallesPago = detallesPago;
             return View(reservacion);
         }
 
@@ -171,7 +239,7 @@ namespace HotelesBeachSA.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PasarelaPago(PagoViewModel model)
+        public async Task<IActionResult> PasarelaPago(ConfirmarReservacionDTO model)
         {
             if (model.FormaPagoId <= 0)
             {
@@ -179,11 +247,55 @@ namespace HotelesBeachSA.Controllers
                 return RedirectToAction("PasarelaPago");
             }
 
-            if ((model.FormaPagoId == 2 || model.FormaPagoId == 3) && (string.IsNullOrEmpty(model.NumeroPago) || string.IsNullOrEmpty(model.Banco)))
+            if ((model.FormaPagoId == 2 || model.FormaPagoId == 3) && (string.IsNullOrEmpty(model.NumeroTarjeta) || string.IsNullOrEmpty(model.Banco)))
             {
                 TempData["Error"] = "Por favor, ingresa el número de tarjeta/cheque y el nombre del banco.";
                 return RedirectToAction("PasarelaPago");
             }
+
+            if (model.FormaPagoId == 1) // efectivo
+            {
+                decimal descuento = 0m;
+
+                if (model.CantidadNoches >= 3 && model.CantidadNoches <= 6)
+                {
+                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.10m; // 10% de descuento
+                }
+                else if (model.CantidadNoches >= 7 && model.CantidadNoches <= 9)
+                {
+                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.15m; // 15% de descuento
+                }
+                else if (model.CantidadNoches >= 10 && model.CantidadNoches <= 12)
+                {
+                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.20m; // 20% de descuento
+                }
+                else if (model.CantidadNoches > 13)
+                {
+                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.25m; // 25% de descuento
+                }
+
+                model.Descuento = descuento;
+                model.MontoConDescuento = (model.TotalPorNoche * model.CantidadNoches) - descuento;
+            }
+            else if (model.FormaPagoId == 2) // cheque
+            {
+                model.Descuento = 0m; // Sin descuento
+                model.MontoConDescuento = model.TotalPorNoche * model.CantidadNoches;
+
+                // Validar datos del cheque
+                if (string.IsNullOrEmpty(model.NumeroTarjeta) || string.IsNullOrEmpty(model.Banco))
+                {
+                    throw new Exception("Debe ingresar el número de cheque y el banco correspondiente.");
+                }
+            }
+            else if (model.FormaPagoId == 3) // tarjeta
+            {
+                model.Descuento = 0m; // Sin descuento
+                model.MontoConDescuento = model.TotalPorNoche * model.CantidadNoches;
+            }
+
+            model.Iva = model.MontoConDescuento * 0.13m;
+            model.TotalFinal = model.MontoConDescuento + model.Iva;
 
             // Recuperar la reservación original desde TempData
             var reservacionJson = TempData["Reservacion"] as string;
@@ -197,31 +309,17 @@ namespace HotelesBeachSA.Controllers
 
             var reservacionOriginal = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
 
-            var factura = new Factura
-            {
-                ReservacionId = reservacionOriginal.Id,
-                FormaPagoId = model.FormaPagoId
-            };
+            // Guardar los detalles de la reservación y el pago en TempData
+            TempData["Reservacion"] = JsonConvert.SerializeObject(reservacionOriginal);
+            TempData["Pago"] = JsonConvert.SerializeObject(model);
+            TempData["DetallesPago"] = JsonConvert.SerializeObject(model);
+            TempData.Keep("Pago");
 
-            // Llamada a la API para crear la factura
-            var response = await _client.PostAsJsonAsync("Factura/Crear", factura);
-
-            if (response.IsSuccessStatusCode)
-            {
-                // Guardar los datos de la reservación y el pago en TempData
-                TempData["Reservacion"] = JsonConvert.SerializeObject(reservacionOriginal);
-                TempData.Keep("Reservacion");
-                TempData["Pago"] = JsonConvert.SerializeObject(model); 
-
-                TempData["Exito"] = "La factura se creó correctamente.";
-                return RedirectToAction("ConfirmarReservacion");
-            }
-            else
-            {
-                TempData["Error"] = "Hubo un problema al crear la factura. Por favor, inténtalo nuevamente.";
-                return RedirectToAction("PasarelaPago");
-            }
+            return RedirectToAction("ConfirmarReservacion");
         }
+
+
+
 
 
         [HttpGet]
@@ -231,8 +329,13 @@ namespace HotelesBeachSA.Controllers
             var reservacionJson = TempData["Reservacion"] as string;
             TempData.Keep("Reservacion");
 
-            // Recuperar la info del pago
+            // Recuperar la info del pago desde TempData
             var pagoJson = TempData["Pago"] as string;
+            TempData.Keep("Pago");
+
+            // Recuperar los detalles del pago desde TempData
+            var detallesPagoJson = TempData["DetallesPago"] as string;
+            TempData.Keep("DetallesPago");
 
             if (string.IsNullOrEmpty(reservacionJson) || string.IsNullOrEmpty(pagoJson))
             {
@@ -242,16 +345,23 @@ namespace HotelesBeachSA.Controllers
 
             var reservacion = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
             var pago = JsonConvert.DeserializeObject<PagoViewModel>(pagoJson);
+            var detallesPago = JsonConvert.DeserializeObject<ConfirmarReservacionDTO>(detallesPagoJson);
 
             // Pasar los datos de la reservación y el pago a la vista
             var model = new ConfirmacionViewModel
             {
                 Reservacion = reservacion,
-                Pago = pago
+                Pago = pago,
+                FormaPagoId = pago.FormaPagoId,
+                Banco = pago.Banco,
+                NumeroPago = "123",
             };
 
             return View(model);
         }
+
+
+
 
 
 

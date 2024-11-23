@@ -4,11 +4,16 @@ namespace HotelesBeachSA.Models
 {
     public class FacturaViewModel
     {
+        [Required]
+        [Key]
+        public int Id { get; set; } // Identificador de la factura.
         [Required(ErrorMessage = "Debe seleccionar una reservación")]
         public int ReservacionId { get; set; } // Llave foránea para asociar la factura con una reservación.
 
         [Required(ErrorMessage = "Debe seleccionar una forma de pago")]
         public int FormaPagoId { get; set; } // Llave foránea para la forma de pago.
+
+        public int DetallePagoId { get; set; } // Llave foránea para el detalle del pago.
 
         [Required(ErrorMessage = "El monto en dólares es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El monto debe ser mayor o igual a 0")]
