@@ -1,0 +1,129 @@
+﻿@model HotelesBeachSA.Models.Reservacion
+
+<h1>Reservación - Paso 2: Método de Pago</h1>
+<hr />
+
+<!-- Formulario para enviar los detalles -->
+<form method="post" asp-action="PasarelaPago">
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Detalles de la reservación en una tabla -->
+            <h4>Detalles de tu reservación:</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Paquete:</strong></td>
+                        <td>@Model.PaqueteId</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cantidad de Personas:</strong></td>
+                        <td>@Model.CantidadPersonas</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fecha Inicio:</strong></td>
+                        <td>@Model.FechaInicio.ToShortDateString()</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Fecha Fin:</strong></td>
+                        <td>@Model.FechaFin.ToShortDateString()</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Detalles de pago en una tabla -->
+            <h4>Detalles de Pago:</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Nombre del Paquete:</strong></td>
+                        <td>@ViewBag.DetallesPago.PaqueteNombre</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Costo por Persona/Noche:</strong></td>
+                        <td>@ViewBag.DetallesPago.CostoPorPersona.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total por Noche:</strong></td>
+                        <td>@ViewBag.DetallesPago.TotalPorNoche.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Descuento:</strong></td>
+                        <td>@ViewBag.DetallesPago.Descuento.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Monto con Descuento:</strong></td>
+                        <td>@ViewBag.DetallesPago.MontoConDescuento.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prima:</strong></td>
+                        <td>@ViewBag.DetallesPago.Prima.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mensualidad:</strong></td>
+                        <td>@ViewBag.DetallesPago.Mensualidad.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IVA (13%):</strong></td>
+                        <td>@ViewBag.DetallesPago.Iva.ToString("C")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Final:</strong></td>
+                        <td>@ViewBag.DetallesPago.TotalFinal.ToString("C")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Seleccionar el método de pago -->
+    <div class="form-group">
+        <label for="formaPagoId">Selecciona un método de pago</label>
+        <select id="formaPagoId" name="formaPagoId" class="form-control" asp-items="@(ViewData["FormasPago"] as SelectList)">
+            <option value="">Seleccionar</option>
+        </select>
+    </div>
+
+    <!-- Inputs adicionales para tarjeta o cheque -->
+    <div id="detallePago" style="display:none;">
+        <div class="form-group" id="numeroPagoDiv">
+            <label for="numeroPago">Número de Cheque/Tarjeta</label>
+            <input type="text" id="numeroPago" name="numeroPago" class="form-control" />
+        </div>
+
+        <div class="form-group" id="bancoDiv">
+            <label for="banco">Nombre del Banco</label>
+            <input type="text" id="banco" name="banco" class="form-control" />
+        </div>
+    </div>
+
+    <!-- Botón de continuar -->
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary mt-3">Continuar al Paso 3</button>
+    </div>
+</form>
+
+<script>
+    document.getElementById("formaPagoId").addEventListener("change", function () {
+        var selectedValue = this.value;
+
+        document.getElementById("detallePago").style.display = "none";
+
+        if (selectedValue == "2" || selectedValue == "3") {
+            document.getElementById("detallePago").style.display = "block";
+        }
+    });
+</script>
