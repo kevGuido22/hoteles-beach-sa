@@ -9,16 +9,96 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-    <section class="d-flex justify-content-start mt-10rem">
-        <div class="container text-start">
-            <h4>Bienvenido a</h4>
-            <h1>Hotel Beach</h1>
-            <div class="d-flex justify-content-start align-content-center">
-                <div>
-                    <a asp-area="" asp-controller="Reservaciones" asp-action="Index" class="btn boton">Reserva ahora<i class="fa-solid fa-arrow-right"></i></a>
+    <header class="bg-light py-5">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">Bienvenido a Hoteles Beach SA</h1>
+            <p class="lead text-muted">Ten un lugar impresionante en el cual poder quedarte y olvidar los problemas.</p>
+            <div class="d-flex justify-content-center mt-4">
+                <a href="#" class="btn btn-primary btn-lg me-2">Get Started</a>
+                @*<a href="#learn-more" class="btn btn-outline-secondary btn-lg">Learn More</a>*@
+            </div>
+        </div>
+    </header>
+
+    <section class="mt-lg-5">
+        <div class="container py-5">
+            <h3 class="text-center">Te ofrecemos los siguientes paquetes:</h3>
+            <div class="row row-cols-1 mt-5 row-cols-md-3 mb-3 text-center">
+                <!-- Free Plan -->
+                <div class="col">
+                    <div class="card mb-4 rounded-3 shadow-sm">
+                        <div class="card-header py-3">
+                            <h4 class="my-0 fw-normal">Hospedaje</h4>
+                        </div>
+                        <div class="card-body">
+                            <h1 class="card-title pricing-card-title">$210 <small class="text-muted fw-light">/ xPersona</small></h1>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li>10 users included</li>
+                                <li>2 GB of storage</li>
+                                <li>Email support</li>
+                                <li>Help center access</li>
+                            </ul>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Reservaciones" asp-action="Create">Ordenar</a>
+                            }
+                            else
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Usuarios" asp-action="Login">Ordenar</a>
+                            }
+
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <a asp-area="" asp-controller="Usuarios" asp-action="ObtenerInfo" class="btn boton ms-4">Crear una cuenta<i class="fa-solid fa-user-plus"></i></a>
+                <!-- Pro Plan -->
+                <div class="col">
+                    <div class="card mb-4 rounded-3 shadow-sm">
+                        <div class="card-header py-3">
+                            <h4 class="my-0 fw-normal">Alimentación</h4>
+                        </div>
+                        <div class="card-body">
+                            <h1 class="card-title pricing-card-title">$275 <small class="text-muted fw-light">/ xPersona</small></h1>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li>20 users included</li>
+                                <li>10 GB of storage</li>
+                                <li>Priority email support</li>
+                                <li>Help center access</li>
+                            </ul>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Reservaciones" asp-action="Create">Ordenar</a>
+                            }
+                            else
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Usuarios" asp-action="Login">Ordenar</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <!-- Enterprise Plan -->
+                <div class="col">
+                    <div class="card mb-4 rounded-3 shadow-sm border-primary">
+                        <div class="card-header py-3 text-bg-primary border-primary">
+                            <h4 class="my-0 fw-normal">Todo incluido</h4>
+                        </div>
+                        <div class="card-body">
+                            <h1 class="card-title pricing-card-title">$450 <small class="text-muted fw-light">/ xPersona</small></h1>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li>30 users included</li>
+                                <li>15 GB of storage</li>
+                                <li>Phone and email support</li>
+                                <li>Help center access</li>
+                            </ul>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Reservaciones" asp-action="Create">Ordenar</a>
+                            }
+                            else
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Usuarios" asp-action="Login">Ordenar</a>
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
