@@ -30,6 +30,11 @@ builder.Services.AddHttpClient("ReservacionesHttpClient", client =>
     client.BaseAddress = new Uri("https://localhost:7016/api/");
 });
 
+builder.Services.AddHttpClient("GometaHttpClient", client =>
+{
+    client.BaseAddress = new Uri("http://apis.gometa.org/tdc/tdc.json");
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

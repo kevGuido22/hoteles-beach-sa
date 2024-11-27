@@ -1,4 +1,7 @@
-﻿@model HotelesBeachSA.Models.Reservacion
+﻿@model HotelesBeachSA.Models.PasarelaPagoViewModel
+@{
+    // TempData.Keep("DetallesPago"); comentado por tetsing
+}
 
 <h1>Reservación - Paso 2: Método de Pago</h1>
 <hr />
@@ -19,19 +22,22 @@
                 <tbody>
                     <tr>
                         <td><strong>Paquete:</strong></td>
-                        <td>@Model.PaqueteId</td>
+                        <td>@Model.ConfirmarReservacionDTO.PaqueteNombre</td>
                     </tr>
                     <tr>
                         <td><strong>Cantidad de Personas:</strong></td>
-                        <td>@Model.CantidadPersonas</td>
+                        <td>@Model.ConfirmarReservacionDTO.Reservacion.CantidadPersonas</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Reservacion.CantidadPersonas" value="@Model.ConfirmarReservacionDTO.Reservacion.CantidadPersonas" />
                     </tr>
                     <tr>
                         <td><strong>Fecha Inicio:</strong></td>
-                        <td>@Model.FechaInicio.ToShortDateString()</td>
+                        <td>@Model.ConfirmarReservacionDTO.Reservacion.FechaInicio.ToShortDateString()</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Reservacion.FechaInicio" value="@Model.ConfirmarReservacionDTO.Reservacion.FechaInicio" />
                     </tr>
                     <tr>
                         <td><strong>Fecha Fin:</strong></td>
-                        <td>@Model.FechaFin.ToShortDateString()</td>
+                        <td>@Model.ConfirmarReservacionDTO.Reservacion.FechaFin.ToShortDateString()</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Reservacion.FechaFin" value="@Model.ConfirmarReservacionDTO.Reservacion.FechaFin" />
                     </tr>
                 </tbody>
             </table>
@@ -50,39 +56,47 @@
                 <tbody>
                     <tr>
                         <td><strong>Nombre del Paquete:</strong></td>
-                        <td>@ViewBag.DetallesPago.PaqueteNombre</td>
+                        <td>@Model.ConfirmarReservacionDTO.PaqueteNombre</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.PaqueteNombre" value="@Model.ConfirmarReservacionDTO.PaqueteNombre" />
                     </tr>
                     <tr>
                         <td><strong>Costo por Persona/Noche:</strong></td>
-                        <td>@ViewBag.DetallesPago.CostoPorPersona.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.CostoPorPersona.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.CostoPorPersona" value="@Model.ConfirmarReservacionDTO.CostoPorPersona" />
                     </tr>
                     <tr>
                         <td><strong>Total por Noche:</strong></td>
-                        <td>@ViewBag.DetallesPago.TotalPorNoche.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.TotalPorNoche.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.TotalPorNoche" value="@Model.ConfirmarReservacionDTO.TotalPorNoche" />
                     </tr>
-                    <tr>
-                        <td><strong>Descuento:</strong></td>
-                        <td>@ViewBag.DetallesPago.Descuento.ToString("C")</td>
-                    </tr>
+                    @*<tr>
+                    <td><strong>Descuento:</strong></td>
+                    <td>@ViewBag.DetallesPago.Descuento.ToString("C")</td>
+                    </tr>*@
                     <tr>
                         <td><strong>Monto con Descuento:</strong></td>
-                        <td>@ViewBag.DetallesPago.MontoConDescuento.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.MontoConDescuento.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.MontoConDescuento" value="@Model.ConfirmarReservacionDTO.MontoConDescuento" />
                     </tr>
                     <tr>
                         <td><strong>Prima:</strong></td>
-                        <td>@ViewBag.DetallesPago.Prima.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.Prima.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Prima" value="@Model.ConfirmarReservacionDTO.Prima" />
                     </tr>
                     <tr>
                         <td><strong>Mensualidad:</strong></td>
-                        <td>@ViewBag.DetallesPago.Mensualidad.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.Mensualidad.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Mensualidad" value="@Model.ConfirmarReservacionDTO.Mensualidad" />
                     </tr>
                     <tr>
                         <td><strong>IVA (13%):</strong></td>
-                        <td>@ViewBag.DetallesPago.Iva.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.Iva.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.Iva" value="@Model.ConfirmarReservacionDTO.Iva" />
                     </tr>
                     <tr>
                         <td><strong>Total Final:</strong></td>
-                        <td>@ViewBag.DetallesPago.TotalFinal.ToString("C")</td>
+                        <td>@Model.ConfirmarReservacionDTO.TotalFinal.ToString("C")</td>
+                        <input type="hidden" name="ConfirmarReservacionDTO.TotalFinal" value="@Model.ConfirmarReservacionDTO.TotalFinal" />
                     </tr>
                 </tbody>
             </table>
@@ -92,23 +106,43 @@
     <!-- Seleccionar el método de pago -->
     <div class="form-group">
         <label for="formaPagoId">Selecciona un método de pago</label>
-        <select id="formaPagoId" name="formaPagoId" class="form-control" asp-items="@(ViewData["FormasPago"] as SelectList)">
-            <option value="">Seleccionar</option>
+        <select id="formaPagoId" name="ConfirmarReservacionDTO.FormaPagoId" class="form-control">
+            @{
+                var formasPago = Model.FormasPagos;
+                foreach (FormaPago formaPago in formasPago)
+                {
+
+                    <option value="@formaPago.Id">@formaPago.Nombre</option>
+
+                }
+            }
         </select>
     </div>
 
     <!-- Inputs adicionales para tarjeta o cheque -->
     <div id="detallePago" style="display:none;">
-        <div class="form-group" id="numeroPagoDiv">
-            <label for="numeroPago">Número de Cheque/Tarjeta</label>
-            <input type="text" id="numeroPago" name="numeroPago" class="form-control" />
+
+        <div class="form-group" id="numeroCheque" style="display:none">
+            <label for="numeroPago">Número de Cheque</label>
+            <input type="text" id="numeroPago" name="ConfirmarReservacionDTO.NumeroCheque" class="form-control" />
+        </div>
+
+        <div class="form-group" id="numeroTarjeta" style="display:none">
+            <label for="numeroPago">Número de Tarjeta</label>
+            <input type="text" id="numeroPago" name="ConfirmarReservacionDTO.Numerotarjeta" class="form-control" />
         </div>
 
         <div class="form-group" id="bancoDiv">
             <label for="banco">Nombre del Banco</label>
-            <input type="text" id="banco" name="banco" class="form-control" />
+            <input type="text" id="banco" name="ConfirmarReservacionDTO.Banco" class="form-control" />
         </div>
     </div>
+
+    <!-- Datos extra -->
+
+    <input type="hidden" name="ConfirmarReservacionDTO.CantidadNoches" value="@Model.ConfirmarReservacionDTO.CantidadNoches" />
+    <input type="hidden" name="ConfirmarReservacionDTO.CantidadPersonas" value="@Model.ConfirmarReservacionDTO.CantidadPersonas" />
+    <input type="hidden" name="ConfirmarReservacionDTO.Reservacion" value="@Model.ConfirmarReservacionDTO.Reservacion" />
 
     <!-- Botón de continuar -->
     <div class="form-group">
@@ -122,8 +156,14 @@
 
         document.getElementById("detallePago").style.display = "none";
 
-        if (selectedValue == "2" || selectedValue == "3") {
+        if (selectedValue == "3" ){
             document.getElementById("detallePago").style.display = "block";
+            document.getElementById("numeroCheque").style.display = "block";
+        }
+
+        if ( selectedValue == "2") {
+            document.getElementById("detallePago").style.display = "block";
+            document.getElementById("numeroTarjeta").style.display = "block";
         }
     });
 </script>

@@ -1,23 +1,24 @@
-﻿@model ConfirmacionViewModel
+﻿@model PasarelaPagoViewModel
 
 <h2>Confirmación de Reservación</h2>
 
 <!-- Detalles de la Reservación -->
 <div>
-    <h3>Paquete: @Model.Reservacion.PaqueteId</h3>
-    <p><strong>Fecha de llegada:</strong> @Model.Reservacion.FechaInicio</p>
-    <p><strong>Fecha de salida:</strong> @Model.Reservacion.FechaFin</p>
-    <p><strong>Cantidad de personas:</strong> @Model.Reservacion.CantidadPersonas</p>
-    <p><strong>Total por noche:</strong> @Model.Pago.TotalPorNoche</p>
+    <h3>Paquete: @Model.ConfirmarReservacionDTO.PaqueteNombre</h3>
+    <p><strong>Fecha de llegada:</strong> @Model.ConfirmarReservacionDTO.Reservacion.FechaInicio</p>
+    <p><strong>Fecha de salida:</strong> @Model.ConfirmarReservacionDTO.Reservacion.FechaFin</p>
+    <p><strong>Cantidad de personas:</strong> @Model.ConfirmarReservacionDTO.Reservacion.CantidadPersonas</p>
+    <p><strong>Total por noche:</strong> @Model.ConfirmarReservacionDTO.TotalPorNoche</p>
+    @*<p><strong>Total por noche:</strong> @Model.Pago.TotalPorNoche</p>*@
 </div>
 
 <!-- Mostrar el descuento si el pago es en efectivo -->
-@if (Model.Pago.FormaPagoId == 1)
+@if (Model.ConfirmarReservacionDTO.FormaPagoId == 1)
 {
     <div>
         <h4>Detalles del descuento por pago en efectivo:</h4>
-        <p><strong>Descuento aplicado:</strong> @Model.Pago.Descuento</p>
-        <p><strong>Total con descuento:</strong> @Model.Pago.MontoConDescuento</p>
+        <p><strong>Descuento aplicado:</strong> @Model.ConfirmarReservacionDTO.Descuento</p>
+        <p><strong>Total con descuento:</strong> @Model.ConfirmarReservacionDTO.MontoConDescuento</p>
     </div>
 }
 else
@@ -29,7 +30,7 @@ else
 <!-- Mostrar los montos finales -->
 <div>
     <h4>Total Final:</h4>
-    <p><strong>Monto total con IVA:</strong> @Model.Pago.TotalFinal</p>
+    <p><strong>Monto total con IVA:</strong> @Model.ConfirmarReservacionDTO.TotalFinal</p>
 </div>
 
 <!-- Botón de confirmación -->
