@@ -60,6 +60,28 @@ namespace HotelesBeachSA.Controllers
 
                 HttpContext.Session.SetString("Token", autorizacion.Token); //se guarda el token en la sesión, se almacena el token otorgado
 
+                //extrar el objeto usuario de la respuesta
+                Usuario usuarioAutenticado = autorizacion.Usuario;
+
+                //extraer los roles de los usuarios
+                List<RolPermisoResponse> rolesPermisos = autorizacion.Roles;
+
+                foreach (var rol in rolesPermisos)
+                {
+                    if (rol.Rol == "admin") {
+                        HttpContext.Session.SetString("rolUsuario", rol.Rol);
+                        return RedirectToAction("AdminIndex", "Home");
+                    }
+                } 
+
+                //convertir el Modelo a un Objeto Json para poder guardarlo en la sesion
+                string usuarioJson = JsonConvert.SerializeObject(usuarioAutenticado);
+
+                //guadar el usuarioJson en la sesion
+                HttpContext.Session.SetString("usuarioActual", usuarioJson);
+
+
+
                 return RedirectToAction("Index", "Home"); //se redirecciona al form principal
             }
             else
@@ -178,7 +200,6 @@ namespace HotelesBeachSA.Controllers
                 return RedirectToAction("ObtenerInfo", "Usuarios");
             }
         }
-
     }
 }
 
