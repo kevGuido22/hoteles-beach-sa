@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace HotelesBeachSA.Models
 {
@@ -7,7 +8,12 @@ namespace HotelesBeachSA.Models
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Debe de ingresar el nombre de la forma de pago")]
-        public string Name { get; set; }
+        [JsonProperty("name")]
+        [Required(ErrorMessage = "Debe ingresar el nombre de la forma de pago")]
+        public string Nombre { get; set; }
+
+        [JsonProperty("isPaymentDetailRequired")]
+        [Required(ErrorMessage = "Debe indicar si el detalle de pago es requerido")]
+        public bool IsPaymentDetailRequired { get; set; }
     }
 }

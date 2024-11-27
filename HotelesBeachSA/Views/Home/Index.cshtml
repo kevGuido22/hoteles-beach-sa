@@ -1,6 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+@model IEnumerable<HotelesBeachSA.Models.Paquete>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,20 +13,82 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-    <section class="d-flex justify-content-start">
-        <div class="container text-start">
-            <h4>Bienvenido a</h4>
-            <h1>Hotel Beach</h1>
-            <div class="d-flex mt-3">
-                <a asp-area="" asp-controller="Reservaciones" asp-action="Index" class="btn boton">
-                    Reserva ahora
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
-                <a asp-area="" asp-controller="Usuarios" asp-action="ObtenerInfo" class="btn boton ms-4">
-                    Crear una cuenta
-                    <i class="fa-solid fa-user-plus"></i>
-                </a>
+    <header class="bg-light py-5">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">Bienvenido a Hoteles Beach SA</h1>
+            <p class="lead text-muted">Ten un lugar impresionante en el cual poder quedarte y olvidar los problemas.</p>
+            <div class="d-flex justify-content-center mt-4">
+                <a href="#" class="btn btn-primary btn-md me-2">Get Started</a>
+                @*<a href="#learn-more" class="btn btn-outline-secondary btn-lg">Learn More</a>*@
             </div>
+        </div>
+    </header>
+
+    <section class="mt-lg-5">
+        <div class="container py-5">
+            <h3 class="text-center">Te ofrecemos los siguientes paquetes:</h3>
+            <div class="row row-cols-1 mt-5 row-cols-md-3 mb-3 text-center">
+                @foreach (var item in Model)
+                {
+                    <!-- Paquetes Cards -->
+                    <div class="col">
+                        <div class="card mb-4 rounded-3 shadow-sm border-primary">
+                            <div class="card-header py-3">
+                                <h5 class="my-0 fw-normal">@Html.DisplayFor(modelItem => item.Nombre)</h5>
+                            </div>
+                            <div class="card-body">
+                                <h1 class="card-title pricing-card-title">$@Html.DisplayFor(modelItem => item.CostoPersona) <small class="text-muted fw-light">/ xPersona</small></h1>
+                                <ul class="list-unstyled mt-3 mb-4">
+                                    <li>Prima para la reserva: @Html.DisplayFor(modelItem => item.PrimaReserva)</li>
+                                    <li>Mensualidades: @Html.DisplayFor(modelItem => item.Mensualidades)</li>
+                                </ul>
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Reservaciones" asp-action="UserReservationView" asp-route-id="@item.Id">Reservar</a>
+                                }
+                                else
+                                {
+                                    <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Usuarios" asp-action="Login">Reservar</a>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Enterprise Plan -->
+                @*<div class="col">
+                    <div class="card mb-4 rounded-3 shadow-sm border-primary">
+                        <div class="card-header py-3 text-bg-primary border-primary">
+                            <h5 class="my-0 fw-normal">Todo incluido</h5>
+                        </div>
+                        <div class="card-body">
+                            <h1 class="card-title pricing-card-title">$450 <small class="text-muted fw-light">/ xPersona</small></h1>
+                            <ul class="list-unstyled mt-3 mb-4">
+                                <li>30 users included</li>
+                                <li>15 GB of storage</li>
+                                <li>Phone and email support</li>
+                                <li>Help center access</li>
+                            </ul>
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Reservaciones" asp-action="Create">Ordenar</a>
+                            }
+                            else
+                            {
+                                <a type="button" class="w-100 btn btn-md btn-primary" asp-area="" asp-controller="Usuarios" asp-action="Login">Ordenar</a>
+                            }
+                        </div>
+                    </div>
+                </div>*@
+
+            </div>
+        </div>
+    </section>
+    <section class="mt-lg-1 mb-5">
+        <div class="container py-5">
+            <h3 class="text-center">Acerca de Nosotros</h3>
+            <p>Lorem ipsum dolor sit amet consectetur adipiscing elit metus, est mi aptent fermentum imperdiet quisque scelerisque, eu himenaeos in vulputate montes id placerat. Tempor vitae arcu dictum pharetra magnis posuere tempus purus proin nulla faucibus natoque augue porta cubilia consequat, convallis erat cursus sed porttitor vulputate in suscipit ridiculus cras neque dictumst senectus malesuada enim. Sollicitudin gravida torquent vestibulum dictumst suscipit sagittis inceptos, aenean placerat eget blandit sapien bibendum, vulputate platea justo rutrum porttitor sociosqu.</p>
         </div>
     </section>
 </body>

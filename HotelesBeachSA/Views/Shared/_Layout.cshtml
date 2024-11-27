@@ -1,10 +1,14 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var rolUsuario = Context.Session.GetString("rolUsuario");
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - HotelesBeachSA</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap5.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HotelesBeachSA.styles.css" asp-append-version="true" />
@@ -12,7 +16,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HotelesBeachSA</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -22,33 +26,37 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="AboutUs">About Us</a>
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Reservaciones" asp-action="Index">Reservaciones</a>
-                            </li>
+                            if (rolUsuario != null && rolUsuario == "admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Reservaciones" asp-action="Index">Reservaciones</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Paquetes" asp-action="Index">Paquetes</a>
+                                </li>
+                            }
+
                         }
                     </ul>
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="" asp-action="">Hi @User.Identity.Name !</a>
+                                <a class="nav-link" asp-area="" asp-controller="" asp-action="">Hi @User.Identity.Name !</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="Logout">Log Out</a>
+                                <a class="nav-link" asp-area="" asp-controller="Usuarios" asp-action="Logout">Log Out</a>
                             </li>
 
                         }
                         else
                         {
                             <li class="nav-item justify-content-end">
-                                <a class="nav-link text-dark d-flex align-items-center gap-2" asp-area="" asp-controller="Usuarios" asp-action="Login">
+                                <a class="nav-link d-flex align-items-center gap-2" asp-area="" asp-controller="Usuarios" asp-action="Login">
                                     Login
                                     <i class="fa-solid fa-user"></i>
                                 </a>
@@ -61,12 +69,12 @@
         </nav>
     </header>
     <div class="container">
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-3 bg-white p-4 rounded">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-black bg-white mt-5">
+    <footer class="border-top footer text-white bg-dark mt-5 pt-4 pb-4">
         <div class="container poppins-regular">
             <div>
                 &copy; 2024 - HotelBeachSA -
