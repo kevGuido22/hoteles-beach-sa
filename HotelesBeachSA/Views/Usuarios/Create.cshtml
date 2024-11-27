@@ -5,68 +5,70 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Create</h1>
+<head>
+    <link rel="stylesheet" href="~/css/createUser.css" asp-append-version="true" />
+</head>
 
-<h4>Usuario</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+<div class="row justify-content-center">
+    <div class="col-md-6">
         @{
             if (TempData["Mensaje"] != null)
             {
-                <div class="alert alert-warning">
+                <div class="alert alert-warning text-center">
                     @TempData["Mensaje"]
                 </div>
             }
         }
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" class="shadow p-4 rounded bg-light">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Cedula" class="control-label"></label>
+            <h1 class="text-primary text-center mb-4">Crear Usuario</h1>
+            <div class="form-group mb-3">
+                <label asp-for="Cedula" class="form-label fw-bold"></label>
                 <input asp-for="Cedula" class="form-control" value="@TempData["Cedula"]" readonly />
                 <span asp-validation-for="Cedula" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Tipo_Cedula" class="control-label"></label>
+            <div class="form-group mb-3">
+                <label asp-for="Tipo_Cedula" class="form-label fw-bold"></label>
                 <input asp-for="Tipo_Cedula" class="form-control" value="@TempData["TipoCedula"]" readonly />
                 <span asp-validation-for="Tipo_Cedula" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Nombre_Completo" class="control-label"></label>
+            <div class="form-group mb-3">
+                <label asp-for="Nombre_Completo" class="form-label fw-bold"></label>
                 <input asp-for="Nombre_Completo" class="form-control" value="@TempData["NombreCompleto"]" readonly />
                 <span asp-validation-for="Nombre_Completo" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Telefono" class="control-label"></label>
-                <input asp-for="Telefono" class="form-control" />
+            <div class="form-group mb-3">
+                <label asp-for="Telefono" class="form-label fw-bold"></label>
+                <input asp-for="Telefono" class="form-control" placeholder="Ingrese su número de teléfono" />
                 <span asp-validation-for="Telefono" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Direccion" class="control-label"></label>
-                <input asp-for="Direccion" class="form-control" />
+            <div class="form-group mb-3">
+                <label asp-for="Direccion" class="form-label fw-bold"></label>
+                <input asp-for="Direccion" class="form-control" placeholder="Ingrese su dirección completa" />
                 <span asp-validation-for="Direccion" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
+            <div class="form-group mb-3">
+                <label asp-for="Email" class="form-label fw-bold"></label>
+                <input asp-for="Email" class="form-control" placeholder="Ingrese su correo electrónico" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Password" class="control-label"></label>
-                <input asp-for="Password" class="form-control" />
+            <div class="form-group mb-3">
+                <label asp-for="Password" class="form-label fw-bold"></label>
+                <input asp-for="Password" class="form-control" type="password" placeholder="Ingrese su contraseña" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="form-group pt-3 d-flex justify-content-between">
-                <a asp-action="Index" asp-controller="Home" class="btn boton">
+                <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">
                     Volver
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z" />
                         <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466" />
                     </svg>
                 </a>
-                <input type="submit" value="Crear" class="btn boton" />
+                <input type="submit" value="Crear" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
+
 
