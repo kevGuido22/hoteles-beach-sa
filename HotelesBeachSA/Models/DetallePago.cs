@@ -8,9 +8,9 @@ namespace HotelesBeachSA.Models
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Debe de ingresar la llave foranea del modelo Factura")]
-        [ForeignKey("Factura")]
-        public int FacturaId { get; set; }
+        //[Required(ErrorMessage = "Debe de ingresar la llave foranea del modelo Factura")]
+        //[ForeignKey("Factura")]
+        //public int FacturaId { get; set; }
 
         public string? NumeroCheque { get; set; }
 
