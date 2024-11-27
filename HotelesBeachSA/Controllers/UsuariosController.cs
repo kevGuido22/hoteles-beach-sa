@@ -94,7 +94,7 @@ namespace HotelesBeachSA.Controllers
         {
             await HttpContext.SignOutAsync();
 
-            return RedirectToAction("Login", "Users");
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
