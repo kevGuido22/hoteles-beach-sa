@@ -67,7 +67,30 @@ namespace HotelesBeachSA.Controllers
             return View(viewModel);
         }
 
+        public async Task<IActionResult> UserReservationView(int id)
+        {
+            // Obtener paquetes
+            var paquetesResponse = await _client.GetAsync("Paquetes/ListadoCompleto");
+            var paquetes = new List<Paquete>();
 
+            if (paquetesResponse.IsSuccessStatusCode)
+            {
+                var paquetesResultado = await paquetesResponse.Content.ReadAsStringAsync();
+                paquetes = JsonConvert.DeserializeObject<List<Paquete>>(paquetesResultado);
+            }
+
+            TempData["paqueteId"] = id;
+            TempData["paquetes"] = paquetes;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UserReservationView([Bind] Reservacion reservacion)
+        {
+            Reservacion reservacion1 = reservacion;
+            return View();
+        }
 
         public async Task<IActionResult> Create()
         {
@@ -87,9 +110,6 @@ namespace HotelesBeachSA.Controllers
             }
             return View();
         }
-
-
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
