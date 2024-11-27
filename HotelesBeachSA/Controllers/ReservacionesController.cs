@@ -1,9 +1,12 @@
-﻿using HotelesBeachSA.Models;
+﻿using Azure;
+using HotelesBeachSA.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MotoscrAPI.Models.custom;
 using Newtonsoft.Json;
 using System.Diagnostics.Eventing.Reader;
+using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace HotelesBeachSA.Controllers
@@ -11,10 +14,14 @@ namespace HotelesBeachSA.Controllers
     public class ReservacionesController : Controller
     {
         private readonly HttpClient _client;
+        private readonly HttpClient _clientGometa;
 
         public ReservacionesController(IHttpClientFactory httpClientFactory)
         {
+            //GometaHttpClient
             _client = httpClientFactory.CreateClient("ReservacionesHttpClient");
+            _clientGometa = httpClientFactory.CreateClient("GometaHttpClient");
+            //_clientGometa = new HttpClient();
         }
 
         [HttpGet]
@@ -88,8 +95,97 @@ namespace HotelesBeachSA.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UserReservationView([Bind] Reservacion reservacion)
         {
-            Reservacion reservacion1 = reservacion;
-            return View();
+
+            var usuarioJson = HttpContext.Session.GetString("usuarioActual");
+
+            if (string.IsNullOrEmpty(usuarioJson))
+            {
+                return Content("No hay usuario en la sesión.");
+            }
+
+            // Deserializar el JSON al objeto original (ejemplo con clase Usuario)
+            var usuario = JsonConvert.DeserializeObject<Usuario>(usuarioJson);
+
+            reservacion.Id = 0;
+            reservacion.FechaCreacion = DateTime.Now;
+            reservacion.UsuarioId = usuario.Id;
+
+
+            // Obtener los detalles del paquete seleccionado
+            HttpResponseMessage paqueteResponse = await _client.GetAsync($"Paquetes/Buscar?id={reservacion.PaqueteId}");
+            if (!paqueteResponse.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "No se pudo obtener la información del paquete seleccionado.";
+                return RedirectToAction("Create");
+            }
+
+            var paquete = JsonConvert.DeserializeObject<Paquete>(await paqueteResponse.Content.ReadAsStringAsync());
+            // Calcular la cantidad de noches
+            var cantidadNoches = (reservacion.FechaFin - reservacion.FechaInicio).Days;
+
+            if (cantidadNoches <= 0)
+            {
+                TempData["Error"] = "La fecha de fin debe ser posterior a la fecha de inicio.";
+                return RedirectToAction("Create");
+            }
+
+            // Calcular costos iniciales
+            var totalNoche = paquete.CostoPersona * reservacion.CantidadPersonas * cantidadNoches;
+            decimal descuento = 0;
+
+            // Aplicar descuentos según la cantidad de noches
+            if (cantidadNoches >= 3 && cantidadNoches <= 6)
+            {
+                descuento = totalNoche * 0.10m; // 10%
+            }
+            else if (cantidadNoches >= 7 && cantidadNoches <= 9)
+            {
+                descuento = totalNoche * 0.15m; // 15%
+            }
+            else if (cantidadNoches >= 10 && cantidadNoches <= 12)
+            {
+                descuento = totalNoche * 0.20m; // 20%
+            }
+            else if (cantidadNoches >= 13)
+            {
+                descuento = totalNoche * 0.25m; // 25%
+            }
+
+            // Aplicar descuento si es en efectivo (por defecto)
+            var montoConDescuento = totalNoche - descuento;
+
+            // Calcular costos adicionales
+            var prima = montoConDescuento * (decimal)paquete.PrimaReserva / 100;
+            var restante = montoConDescuento - prima;
+            var mensualidad = restante / paquete.Mensualidades;
+
+            // Calcular IVA
+            var iva = montoConDescuento * 0.13m;
+            var totalFinal = montoConDescuento + iva;
+
+            ConfirmarReservacionDTO reservacionDTO = new ConfirmarReservacionDTO
+            {
+                Reservacion = reservacion,
+                PaqueteId = paquete.Id,
+                PaqueteNombre = paquete.Nombre,
+                CostoPorPersona = paquete.CostoPersona,
+                TotalPorNoche = totalNoche,
+                Descuento = descuento,
+                MontoConDescuento = montoConDescuento,
+                Prima = prima,
+                Mensualidad = mensualidad,
+                Iva = iva,
+                TotalFinal = totalFinal,
+                CantidadNoches = cantidadNoches,
+                CantidadPersonas = reservacion.CantidadPersonas
+            };
+
+            //TempData["Reservacion"] = JsonConvert.SerializeObject(reservacion);
+            //TempData["DetallesPago"] = JsonConvert.SerializeObject(detallesPago);
+            TempData["ReservacionDTO"] = JsonConvert.SerializeObject(reservacionDTO);
+            TempData.Keep();
+
+            return RedirectToAction("PasarelaPago");
         }
 
         public async Task<IActionResult> Create()
@@ -215,43 +311,48 @@ namespace HotelesBeachSA.Controllers
         [HttpGet]
         public async Task<IActionResult> PasarelaPago()
         {
-            var reservacionJson = TempData["Reservacion"] as string;
-            var detallesPagoJson = TempData["DetallesPago"] as string;
-            TempData.Keep("Reservacion");
-            TempData.Keep("DetallesPago");
 
-            if (string.IsNullOrEmpty(reservacionJson) || string.IsNullOrEmpty(detallesPagoJson))
+            if (TempData["ReservacionDTO"] == null)
             {
-                TempData["Error"] = "Hubo un problema al recuperar los datos de la reservación o los detalles de pago. Por favor, inicia el proceso nuevamente.";
+                TempData["Error"] = "Hubo un problema al procesar la reservación.";
                 return RedirectToAction("Create");
             }
 
-            var reservacion = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
-            var detallesPago = JsonConvert.DeserializeObject<ConfirmarReservacionDTO>(detallesPagoJson);
+            ConfirmarReservacionDTO reservacionDTO = JsonConvert.DeserializeObject<ConfirmarReservacionDTO>(TempData["ReservacionDTO"].ToString());
+
 
             HttpResponseMessage responseFormasPago = await _client.GetAsync("FormaPago/Listado");
-            if (responseFormasPago.IsSuccessStatusCode)
+
+            if (!responseFormasPago.IsSuccessStatusCode)
             {
-                var formasPago = JsonConvert.DeserializeObject<List<FormaPago>>(await responseFormasPago.Content.ReadAsStringAsync());
-                if (formasPago != null && formasPago.Any())
-                {
-                    ViewData["FormasPago"] = new SelectList(formasPago, "Id", "Nombre");
-                }
-                else
-                {
-                    ViewData["FormasPago"] = new SelectList(new List<FormaPago>(), "Id", "Nombre");
-                    TempData["Error"] = "No se encontraron formas de pago disponibles.";
-                }
-            }
-            else
-            {
+
                 TempData["Error"] = "No se pudieron cargar las formas de pago.";
                 ViewData["FormasPago"] = new SelectList(new List<FormaPago>(), "Id", "Nombre");
             }
 
+            List<FormaPago> formasPago = JsonConvert.DeserializeObject<List<FormaPago>>(await responseFormasPago.Content.ReadAsStringAsync());
+
+            PasarelaPagoViewModel pasarelaViewModel = new PasarelaPagoViewModel
+            {
+                ConfirmarReservacionDTO =reservacionDTO,
+                FormasPagos = formasPago
+            };
+
+            if (formasPago != null && formasPago.Any())
+            {
+                ViewData["FormasPago"] = new SelectList(formasPago, "Id", "Nombre");
+            }
+            else
+            {
+                ViewData["FormasPago"] = new SelectList(new List<FormaPago>(), "Id", "Nombre");
+                TempData["Error"] = "No se encontraron formas de pago disponibles.";
+            }
+
+
             // Pasar la reservación y detalles de pago a la vista
-            ViewBag.DetallesPago = detallesPago;
-            return View(reservacion);
+            //ViewBag.DetallesPago = detallesPago;
+            TempData["reservacionBackup"] = JsonConvert.SerializeObject(reservacionDTO.Reservacion);
+            return View(pasarelaViewModel);
         }
 
 
@@ -259,128 +360,191 @@ namespace HotelesBeachSA.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PasarelaPago(ConfirmarReservacionDTO model)
+        public async Task<IActionResult> PasarelaPago(PasarelaPagoViewModel model)
         {
-            if (model.FormaPagoId <= 0)
+            Reservacion reservacionBackup = JsonConvert.DeserializeObject<Reservacion>(TempData["reservacionBackup"].ToString());
+
+            PasarelaPagoViewModel pasarelaPagoModel = model;
+            var formaPagoId = pasarelaPagoModel.ConfirmarReservacionDTO.FormaPagoId;
+            ConfirmarReservacionDTO confirmarReservacion = pasarelaPagoModel.ConfirmarReservacionDTO;
+
+            if (formaPagoId <= 0)
             {
                 TempData["Error"] = "Por favor, selecciona un método de pago válido.";
                 return RedirectToAction("PasarelaPago");
             }
 
-            if ((model.FormaPagoId == 2 || model.FormaPagoId == 3) && (string.IsNullOrEmpty(model.NumeroTarjeta) || string.IsNullOrEmpty(model.Banco)))
+            if ((formaPagoId == 2 || formaPagoId == 3) && (string.IsNullOrEmpty(confirmarReservacion.NumeroTarjeta) || string.IsNullOrEmpty(confirmarReservacion.Banco)))
             {
                 TempData["Error"] = "Por favor, ingresa el número de tarjeta/cheque y el nombre del banco.";
                 return RedirectToAction("PasarelaPago");
             }
 
-            if (model.FormaPagoId == 1) // efectivo
+            if (formaPagoId == 1) // efectivo
             {
                 decimal descuento = 0m;
 
-                if (model.CantidadNoches >= 3 && model.CantidadNoches <= 6)
+                if (confirmarReservacion.CantidadNoches >= 3 && confirmarReservacion.CantidadNoches <= 6)
                 {
-                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.10m; // 10% de descuento
+                    descuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches * 0.10m; // 10% de descuento
                 }
-                else if (model.CantidadNoches >= 7 && model.CantidadNoches <= 9)
+                else if (confirmarReservacion.CantidadNoches >= 7 && confirmarReservacion.CantidadNoches <= 9)
                 {
-                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.15m; // 15% de descuento
+                    descuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches * 0.15m; // 15% de descuento
                 }
-                else if (model.CantidadNoches >= 10 && model.CantidadNoches <= 12)
+                else if (confirmarReservacion.CantidadNoches >= 10 && confirmarReservacion.CantidadNoches <= 12)
                 {
-                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.20m; // 20% de descuento
+                    descuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches * 0.20m; // 20% de descuento
                 }
-                else if (model.CantidadNoches > 13)
+                else if (confirmarReservacion.CantidadNoches > 13)
                 {
-                    descuento = model.TotalPorNoche * model.CantidadNoches * 0.25m; // 25% de descuento
+                    descuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches * 0.25m; // 25% de descuento
                 }
 
-                model.Descuento = descuento;
-                model.MontoConDescuento = (model.TotalPorNoche * model.CantidadNoches) - descuento;
+                confirmarReservacion.Descuento = descuento;
+                confirmarReservacion.MontoConDescuento = (confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches) - descuento;
             }
-            else if (model.FormaPagoId == 2) // cheque
+            else if (confirmarReservacion.FormaPagoId == 2) // cheque
             {
-                model.Descuento = 0m; // Sin descuento
-                model.MontoConDescuento = model.TotalPorNoche * model.CantidadNoches;
+                confirmarReservacion.Descuento = 0m; // Sin descuento
+                confirmarReservacion.MontoConDescuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches;
 
                 // Validar datos del cheque
-                if (string.IsNullOrEmpty(model.NumeroTarjeta) || string.IsNullOrEmpty(model.Banco))
+                if (string.IsNullOrEmpty(confirmarReservacion.NumeroTarjeta) || string.IsNullOrEmpty(confirmarReservacion.Banco))
                 {
                     throw new Exception("Debe ingresar el número de cheque y el banco correspondiente.");
                 }
             }
-            else if (model.FormaPagoId == 3) // tarjeta
+            else if (confirmarReservacion.FormaPagoId == 3) // tarjeta
             {
-                model.Descuento = 0m; // Sin descuento
-                model.MontoConDescuento = model.TotalPorNoche * model.CantidadNoches;
+                confirmarReservacion.Descuento = 0m; // Sin descuento
+                confirmarReservacion.MontoConDescuento = confirmarReservacion.TotalPorNoche * confirmarReservacion.CantidadNoches;
             }
 
-            model.Iva = model.MontoConDescuento * 0.13m;
-            model.TotalFinal = model.MontoConDescuento + model.Iva;
+            confirmarReservacion.Iva = confirmarReservacion.MontoConDescuento * 0.13m;
+            confirmarReservacion.TotalFinal = confirmarReservacion.MontoConDescuento + confirmarReservacion.Iva;
 
-            // Recuperar la reservación original desde TempData
-            var reservacionJson = TempData["Reservacion"] as string;
-            TempData.Keep("Reservacion");
 
-            if (string.IsNullOrEmpty(reservacionJson))
-            {
-                TempData["Error"] = "Hubo un problema al recuperar los datos de la reservación. Por favor, inicia el proceso nuevamente.";
-                return RedirectToAction("Create");
-            }
+            pasarelaPagoModel.ConfirmarReservacionDTO = confirmarReservacion;
+            pasarelaPagoModel.ConfirmarReservacionDTO.Reservacion = reservacionBackup;
 
-            var reservacionOriginal = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
-
-            // Guardar los detalles de la reservación y el pago en TempData
-            TempData["Reservacion"] = JsonConvert.SerializeObject(reservacionOriginal);
-            TempData["Pago"] = JsonConvert.SerializeObject(model);
-            TempData["DetallesPago"] = JsonConvert.SerializeObject(model);
-            TempData.Keep("Pago");
+            TempData["pasarelaPagoModel"] = JsonConvert.SerializeObject(pasarelaPagoModel);
 
             return RedirectToAction("ConfirmarReservacion");
         }
 
 
 
-
-
         [HttpGet]
-        public IActionResult ConfirmarReservacion()
+        public async Task<IActionResult>  ConfirmarReservacion()
         {
-            // Recuperar la reservación desde TempData
-            var reservacionJson = TempData["Reservacion"] as string;
-            TempData.Keep("Reservacion");
 
-            // Recuperar la info del pago desde TempData
-            var pagoJson = TempData["Pago"] as string;
-            TempData.Keep("Pago");
+            //recuperar la pasarelaPagoViewModel
+            PasarelaPagoViewModel pasarelaPagoViewModel = JsonConvert.DeserializeObject<PasarelaPagoViewModel>(TempData["pasarelaPagoModel"].ToString());
 
-            // Recuperar los detalles del pago desde TempData
-            var detallesPagoJson = TempData["DetallesPago"] as string;
-            TempData.Keep("DetallesPago");
+            ApiGometaResponse data = null;
 
-            if (string.IsNullOrEmpty(reservacionJson) || string.IsNullOrEmpty(pagoJson))
+            //obtener tipos de cambio
+            var gometaResponse = await _clientGometa.GetAsync("");
+
+            if (gometaResponse.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Hubo un problema al recuperar los datos. Por favor, vuelve a intentarlo.";
-                return RedirectToAction("Create");
+                var result = await gometaResponse.Content.ReadAsStringAsync();
+                data = JsonConvert.DeserializeObject<ApiGometaResponse>(result);
             }
 
-            var reservacion = JsonConvert.DeserializeObject<Reservacion>(reservacionJson);
-            var pago = JsonConvert.DeserializeObject<PagoViewModel>(pagoJson);
-            var detallesPago = JsonConvert.DeserializeObject<ConfirmarReservacionDTO>(detallesPagoJson);
+            //convertir a decimal la venta de dolares
+            decimal precioVenta = decimal.Parse(data.Venta, System.Globalization.CultureInfo.InvariantCulture);
+            decimal precioCompra = decimal.Parse(data.Compra, System.Globalization.CultureInfo.InvariantCulture);
 
-            // Pasar los datos de la reservación y el pago a la vista
-            var model = new ConfirmacionViewModel
-            {
-                Reservacion = reservacion,
-                Pago = pago,
-                FormaPagoId = pago.FormaPagoId,
-                Banco = pago.Banco,
-                NumeroPago = "123",
-            };
+            //set total doalres
+            //pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalDolares = Math.Round(pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalFinal / precioVenta, 2);
 
-            return View(model);
+            //set total en colones
+            pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalColones = Math.Round(pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalFinal * precioCompra, 2);
+
+            pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalDolares = pasarelaPagoViewModel.ConfirmarReservacionDTO.TotalFinal;
+
+            //empaquetar el modelo para persistir en la siguiente accion
+            TempData["pasarelaPagoModel"] = JsonConvert.SerializeObject(pasarelaPagoViewModel);
+            return View(pasarelaPagoViewModel);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ActionName("ConfirmarReservacion")]
+        public async Task<IActionResult> ConfirmarReservacionPost() 
+        {
+            PasarelaPagoViewModel pasarelaPagoViewModel = JsonConvert.DeserializeObject<PasarelaPagoViewModel>(TempData["pasarelaPagoModel"].ToString());
 
+            _client.DefaultRequestHeaders.Authorization = AutorizacionToken();
+
+            ConfirmarReservacionDTO confirmarReservacion = pasarelaPagoViewModel.ConfirmarReservacionDTO;
+
+            Reservacion reservacionTemp = pasarelaPagoViewModel.ConfirmarReservacionDTO.Reservacion;
+            //reservacionTemp.UsuarioId = 2;
+
+            var reservacionResponse = await _client.PostAsJsonAsync("Reservacion/Crear", reservacionTemp);
+
+            //falta construir, devolver al inicio para que sae vuleva a hacer la reservacion 
+            if (!reservacionResponse.IsSuccessStatusCode)
+            {
+                //TERMINAR DE CONSTRUIR     
+                TempData["Error"] = "El paquete se registró correctamente.";
+                return RedirectToAction("Index");
+            }
+
+            var resultReservacion = await reservacionResponse.Content.ReadAsStringAsync();
+            reservacionTemp = JsonConvert.DeserializeObject<Reservacion>(resultReservacion.ToString());
+
+            DetallePago detallePagoTemp = new DetallePago { 
+                NumeroCheque = confirmarReservacion.NumeroCheque,
+                NumeroTarjeta = confirmarReservacion.NumeroTarjeta,
+                Banco = confirmarReservacion.Banco
+            };
+
+            //si la forma de pago no es efectivo
+            if (confirmarReservacion.FormaPagoId != 1) {
+                var detallePagoResponse = await _client.PostAsJsonAsync("DetallePago/Crear", detallePagoTemp);
+
+                if (detallePagoResponse.IsSuccessStatusCode)
+                {
+                    var resultDetallePago = await detallePagoResponse.Content.ReadAsStringAsync();
+
+                    TempData["Exito"] = "El paquete se registró correctamente.";
+
+                    detallePagoTemp = JsonConvert.DeserializeObject<DetallePago>(resultDetallePago.ToString());
+                }
+            }
+
+            
+
+            Factura facturaTemp = new Factura
+            {
+                Id = 0,
+                ReservacionId = reservacionTemp.Id,
+                DetallePagoId = detallePagoTemp.Id,
+                FormaPagoId = confirmarReservacion.FormaPagoId,
+                CantidadNoches = confirmarReservacion.CantidadNoches,
+                ValorDescuento = confirmarReservacion.ValorDescuento,
+                TotalColones = confirmarReservacion.TotalColones,
+                TotalDolares = confirmarReservacion.TotalDolares
+            };
+
+            var facturaResponse = await _client.PostAsJsonAsync("Factura/Crear", facturaTemp);
+
+            //falta construir, devolver al inicio para que sae vuleva a hacer la reservacion 
+            if (!facturaResponse.IsSuccessStatusCode) {
+                    TempData["Error"] = "El paquete se registró correctamente.";
+                return RedirectToAction("Index");
+            }
+
+            var resultFacturaResponse = await facturaResponse.Content.ReadAsStringAsync();
+
+            facturaTemp = JsonConvert.DeserializeObject<Factura>(resultFacturaResponse.ToString());
+
+            return RedirectToAction("Index", "Home");
+        }
 
 
 
@@ -400,6 +564,24 @@ namespace HotelesBeachSA.Controllers
 
             TempData["Error"] = "No se pudo cargar la reservación.";
             return RedirectToAction("Index");
+        }
+
+        private AuthenticationHeaderValue AutorizacionToken()
+        {
+            //se extrae el token almacenado dentro de la sesion
+            var token = HttpContext.Session.GetString("token");
+
+            //varible para almacenar el token
+            AuthenticationHeaderValue authentication = null;
+
+            if (token != null && token.Length != 0)
+            {
+                //almacenar el token otorgado
+                authentication = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            //retornar token
+            return authentication;
         }
 
     }
