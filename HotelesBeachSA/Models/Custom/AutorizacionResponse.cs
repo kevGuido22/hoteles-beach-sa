@@ -8,6 +8,8 @@
 
         public string Msj { get; set; }
 
+        public Usuario Usuario { get; set; }
+
         public List<RolPermisoResponse> Roles { get; set; }
     }
 }
