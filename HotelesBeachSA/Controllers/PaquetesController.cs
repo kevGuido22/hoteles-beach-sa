@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using HotelesBeachSA.Models;
 using System.Text;
+using System.Net.Http.Headers;
 
 namespace HotelesBeachSA.Controllers
 {
@@ -39,10 +40,12 @@ namespace HotelesBeachSA.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Create([Bind] Paquete paquete)
         {
             //la id es autoincrementable
             paquete.Id = 0;
+            _client.DefaultRequestHeaders.Authorization = AutorizacionToken();
 
             var response = await _client.PostAsJsonAsync("Paquetes/Crear", paquete);
 
@@ -109,6 +112,34 @@ namespace HotelesBeachSA.Controllers
             TempData["Error"] = "No se pudo cargar el paquete.";
             return RedirectToAction("Index");
         }
+
+
+
+        public IActionResult Delete()
+        {
+            return View();
+        }
+
+
+
+        private AuthenticationHeaderValue AutorizacionToken()
+        {
+            //se extrae el token almacenado dentro de la sesion
+            var token = HttpContext.Session.GetString("token");
+
+            //varible para almacenar el token
+            AuthenticationHeaderValue authentication = null;
+
+            if (token != null && token.Length != 0)
+            {
+                //almacenar el token otorgado
+                authentication = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            //retornar token
+            return authentication;
+        }
+
 
     }
 }
